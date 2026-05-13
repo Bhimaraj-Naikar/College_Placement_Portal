@@ -1,0 +1,31 @@
+// models/adminSchema.js
+import mongoose from "mongoose";
+import bcrypt from "bcrypt";
+
+const adminSchema = new mongoose.Schema(
+  {
+    username: { type: String, required: true },
+    email: {
+      type: String,
+      required: true,
+      unique: true,
+      match: [/^[a-zA-Z0-9._%+-]+@cmrit\.ac\.in$/, "Invalid college email"],
+    },
+    password: { type: String, required: true },
+    role: { type: String, default: "admin" },
+  },
+  { timestamps: true }
+);
+
+adminSchema.pre("save", async function (next) {
+  if (!this.isModified("password")) return next();
+  this.password = await bcrypt.hash(this.password, 10);
+  next();
+});
+
+adminSchema.methods.matchPassword = async function (enteredPassword) {
+  return await bcrypt.compare(enteredPassword, this.password);
+};
+
+const Admin = mongoose.model("Admin", adminSchema);
+export default Admin;
